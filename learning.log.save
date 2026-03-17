@@ -1,0 +1,210 @@
+# HTTP Basics
+
+## 1. What problem does it solve?
+HTTP allows clients (browser/apps) to communicate with servers.
+
+## 2. Key Concepts
+- Request
+- Response
+- Headers
+- Status codes
+- Methods (GET POST PUT DELETE)
+
+## 3. Example
+GET /users
+Host: api.example.com
+
+Response:
+200 OK
+Content-Type: application/json
+
+{
+  "name": "Anshika"
+}
+
+## 4. Where it appears in my project
+Used when creating API endpoints in FastAPI.
+
+Example:
+GET /events
+POST /events
+
+## 5. Things that confused me
+Difference between PUT vs PATCH
+
+
+
+# HTTP Methods
+
+## Problem
+Client needs different ways to interact with server resources.
+
+## Methods
+GET → retrieve data
+POST → create data
+PUT → replace data
+PATCH → update data
+DELETE → remove data
+
+## Example
+
+GET /events
+
+POST /events
+{
+ "name": "Hackathon"
+}
+
+## In My Project
+Used in Event Ledger API
+
+GET /events
+POST /events
+DELETE /events/{id}
+
+## Mistakes I Made
+Sent GET request instead of POST
+
+## Interview Questions
+Difference between PUT and PATCH
+
+                    INTERNET
+                        |
+                        |
+                    DNS SYSTEM
+                        |
+                        |
+                    HTTP / HTTPS
+                        |
+                        |
+                -------------------
+                |                 |
+             CLIENT            SERVER
+           (Browser/App)      (Backend)
+                                   |
+                                   |
+                              API LAYER
+                         (FastAPI / Express)
+                                   |
+                    --------------------------------
+                    |                              |
+              BUSINESS LOGIC                   AUTHENTICATION
+             (Application Code)              (JWT / OAuth)
+                    |
+                    |
+               DATABASE LAYER
+        (PostgreSQL / MySQL / MongoDB)
+                    |
+                    |
+                 CACHING
+                 (Redis)
+                    |
+                    |
+             MESSAGE QUEUES
+        (Kafka / RabbitMQ / Celery)
+                    |
+                    |
+                DEVOPS LAYER
+       (Docker / CI-CD / Kubernetes)
+                    |
+                    |
+                  CLOUD
+          (AWS / GCP / Azure)
+
+#OPENING A WEBSITE 
+Browser
+   ↓
+DNS lookup
+   ↓
+TCP connection
+   ↓
+HTTP request
+   ↓
+Backend API
+   ↓
+Business logic
+   ↓
+Database query
+   ↓
+JSON response
+   ↓
+Browser renders UI
+
+#DAY 1 
+
+1. Flask Application Factory Pattern
+Interview Definition
+
+The Application Factory Pattern in Flask is a design pattern where the Flask app is created inside a function rather than as a global variable.
+
+This allows:
+
+modular architecture
+
+easier testing
+
+multiple app instances with different configurations.
+
+
+basic syntax 
+
+from flask import Flask
+
+def create_app():
+    app = Flask(__name__)
+    return app
+
+Q)) why not just from flask import flask and then app = flask(__name__)
+	-creates problems in larger systems 
+circular imports = modules depend on each other 
+harder testing= cannot create multiple app instances
+config issues = env based configs harder
+
+IMPLEMENTATION 
+from flask import Flask //Imports flask class used to create web server 
+
+def create_app(): //factory fn that builds and returns flask app 
+     app = Flask(__name__) //initialise and create flask application object and --name-- helps flask locate templates,static files and modules 
+    @app.route("/") //define route-registers a url endpoint 
+    def home(): //route handler and calls a python dict 
+        return {"message": "EventLedger API running"}
+
+    @app.route("/health")
+    def health():
+        return {"status": "healthy"}
+
+    return app
+
+SERVER ENTRY POINT(run.py)
+starts flask server - seperates application logic and startup 
+
+from app import create_app
+
+app = create_app()
+
+if __name__ == "__main__":  //files runs only when executed directly and not when imported
+    app.run(debug=True) //starts flask development server
+
+REQUEST FLOW
+
+Client
+ ↓
+Flask Server
+ ↓
+Route Matching
+ ↓
+health() function
+ ↓
+Return JSON
+ ↓
+HTTP Response
+
+
+Time complexity - route lookup in flask uses a has-based routing table 
+avg lookup complexity -	O(1)
+
+health endpoint is used by monitoring systems to verify whether the backend service is running 
+
+create_app() is responsible for initializing the entire application env including databse connections,extensions, routes and configs
+run.py starts the sever 
+routes onyl handle https request,responses,business logic calls 
