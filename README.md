@@ -78,3 +78,22 @@ Returns health status.
 - [ ] Redis background jobs
 - [ ] Docker deployment
 - [ ] AWS deployment
+
+
+### Delete Event
+
+DELETE /events/<id>
+
+Deletes an event by its ID.
+
+#### Example:
+
+DELETE /events/1
+
+#### Response:
+
+Success:
+```json
+{
+  "message": "Event deleted"
+}

@@ -19,6 +19,15 @@ def create_events():
 	event_id+=1
 
 	return response,201
+
 @events_bp.route("/events", methods=["GET"])
 def get_events():
 	return {"events": events}
+
+@events_bp.route("/events/<int:id>", methods=["DELETE"])
+def delete_event(id):
+    if id in events:
+        del events[id]
+        return {"message": "Event deleted"}, 200
+    else:
+        return {"error": "Event not found"}, 404
