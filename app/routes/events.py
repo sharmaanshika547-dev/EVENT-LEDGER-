@@ -31,3 +31,25 @@ def delete_event(id):
         return {"message": "Event deleted"}, 200
     else:
         return {"error": "Event not found"}, 404
+
+@events_bp.route("/events/<int:id>", methods=["PUT"])
+def update_event(id):
+    if id in events:
+        data = request.get_json()
+        events[id] = data
+        return {
+            "id": id,
+            "event": events[id]
+        }, 200
+    else:
+        return {"error": "Event not found"}, 404
+    
+@events_bp.route("/events/<int:id>", methods=["GET"])
+def get_event(id):
+    if id in events:
+        return {
+            "id": id,
+            "event": events[id]
+        }, 200
+    else:
+        return {"error": "Event not found"}, 404

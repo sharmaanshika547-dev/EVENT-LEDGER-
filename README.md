@@ -97,3 +97,13 @@ Success:
 {
   "message": "Event deleted"
 }
+
+### Get Single Event
+
+GET /events/<id>
+
+Returns a specific event.
+
+#### Example:
+
+GET /events/1
