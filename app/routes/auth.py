@@ -44,3 +44,31 @@ def register():
     }
 
     return {"message": "user registered successfully"}, 201
+
+
+@auth_bp.route("/login", methods=["POST"])
+def login():
+    data = request.get_json()
+
+    if not data:
+        return {"error": "no data provided"}, 400
+
+    if "email" not in data:
+        return {"error": "email required"}, 400
+
+    if "password" not in data:
+        return {"error": "password required"}, 400
+
+    email = data["email"]
+    password = data["password"]
+
+    if email not in users:
+        return {"error": "user not found"}, 404
+
+    if users[email]["password"] != str(hash(password)):
+        return {"error": "invalid credentials"}, 401
+
+    # temporary token
+    token = "logged_in_user"
+
+    return {"token": token}, 200
