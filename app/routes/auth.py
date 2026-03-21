@@ -1,6 +1,8 @@
 from flask import Blueprint, request
+import jwt
+import datetime 
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 # temporary in-memory storage
 users = {}
@@ -68,7 +70,18 @@ def login():
     if users[email]["password"] != str(hash(password)):
         return {"error": "invalid credentials"}, 401
 
-    # temporary token
-    token = "logged_in_user"
+    payload={
+        "email":email,
+        "exp":datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }
+
+    token = jwt.encode(payload,"secret_key",algorithm="HS256")
+    if isinstance(token, bytes):
+        token = token.decode("utf-8")
 
     return {"token": token}, 200
+
+@auth_bp.route("/test")
+def test():
+    return {"msg": "auth working"}
+
