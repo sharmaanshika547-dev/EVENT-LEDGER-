@@ -33,7 +33,14 @@ def create_events():
 
 @events_bp.route("/events", methods=["GET"])
 def get_events():
-	return {"events": events}
+    current_user_id = request.user_id
+	
+    user_events =[
+        event for event in events
+        if event["user_id"]==current_user_id
+    ]
+
+    return {"events":user_events}
 
 @events_bp.route("/events/<int:id>", methods=["DELETE"])
 def delete_event(id):
