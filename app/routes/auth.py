@@ -2,6 +2,41 @@ from flask import Blueprint, request
 import jwt
 import datetime 
 
+from functools import wraps
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+
+        auth_header = request.headers.get("Authorization")
+        print("HEADER:", auth_header)   # 👈 debug
+
+        if not auth_header:
+            return {"error": "token missing"}, 401
+
+        try:
+            parts = auth_header.split(" ")
+            print("PARTS:", parts)      # 👈 debug
+
+            if len(parts) != 2 or parts[0] != "Bearer":
+                return {"error": "invalid auth header format"}, 401
+
+            token = parts[1].strip()
+            print("TOKEN:", token)      # 👈 debug
+
+            data = jwt.decode(token, "secret_key", algorithms=["HS256"])
+            print("DECODED:", data)     # 👈 debug
+
+            request.user_id = data["user_id"]
+
+        except Exception as e:
+            print("JWT ERROR:", repr(e))   # 👈 IMPORTANT
+            return {"error": "invalid token"}, 401
+
+        return f(*args, **kwargs)
+
+    return decorated
+
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 # temporary in-memory storage
@@ -72,6 +107,7 @@ def login():
 
     payload={
         "email":email,
+        "user_id":email,
         "exp":datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     }
 
