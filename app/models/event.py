@@ -1,19 +1,17 @@
-from app.extensions import db
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database import Base
+import datetime 
 
-class Event(db.Model):
+class Event(Base):
     __tablename__ = "events"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    user_id = db.Column(db.String)
-    date = db.Column(db.String(50))
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "user_id": self.user_id
-        }
-
-    def __repr__(self):
-        return f"<Event {self.id} {self.title}>"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    description = Column(String)
+    # Logic: This link connects the event to a specific user ID
+    owner_id = Column(Integer, ForeignKey("users.id")) 
+    date = Column(String,nullable=True)
+    
+    # Logic: Automatically records the exact time you hit 'Execute'
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))

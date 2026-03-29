@@ -282,3 +282,72 @@ Client → JWT → Flask → Middleware → DB → JSON Response
 # 🙌 Final Note
 
 This project marks the transition from basic coding to real backend development with proper structure, persistence, and security.
+
+
+# EventLedger
+
+A backend API for managing events with authentication and database integration.
+
+## 🚀 Features
+
+- User registration & login (JWT authentication)
+- Protected routes using middleware
+- Create events
+- Fetch user-specific events
+- Delete events with authorization
+- SQLite database with SQLAlchemy ORM
+
+## 🔐 Authentication
+
+Uses JWT tokens for stateless authentication.
+
+Flow:
+1. Register user
+2. Login → get token
+3. Use token in headers for protected routes
+
+## 📌 API Endpoints
+
+### Auth
+
+- POST /auth/register
+- POST /auth/login
+
+### Events
+
+- POST /events (create event)
+- GET /events (get all user events)
+- DELETE /events/<id> (delete event)
+
+## 🛠 Tech Stack
+
+- Python
+- Flask
+- SQLAlchemy
+- SQLite
+- JWT
+
+## 📂 Project Structure
+app/
+├ routes/
+├ models/
+├ services/
+├ extensions.py
+
+
+## ⚡ Setup
+
+```bash
+git clone <repo>
+cd EVENT-LEDGER-
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python run.py
+
+📌 Future Improvements
+Update (PUT) endpoint
+Database for users (instead of in-memory)
+Password hashing with bcrypt
+Pagination & filtering
+Deployment on AWS
