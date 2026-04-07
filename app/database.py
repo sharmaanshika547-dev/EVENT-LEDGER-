@@ -1,23 +1,28 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 
-# 1. Logic: Define where the database file sits
-SQLALCHEMY_DATABASE_URL = "sqlite:///./momentum.db"
+# 1. Update the prefix to include +asyncpg to use async driver
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/event_ledger_db"
 
-# 2. Logic: Create the Engine (The actual connection)
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+# 2. Use create_async_engine instead of create_engine
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 
-# 3. Logic: The Session (The 'bridge' we use to talk to the DB)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# 3. Use async_sessionmaker for the session factory
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine, 
+    autoflush=False, 
+    class_=AsyncSession, #explicityly tells it to produce asyncsession object 
+    autocommit=False, 
+    expire_on_commit=False
+)
 
-# 4. Logic: The Base class (All our models will inherit from this)
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
-# 5. The "Dependency" (The key to keeping your app fast)
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# 4. Refactor get_db to be an async generator
+async def get_db(): #dependency how fastapi gets acess to db 
+    async with AsyncSessionLocal() as session: #context manger handles cleanup 
+        try:
+            yield session #suspends her,gives session to the route then resumes to close 
+        finally:
+            await session.close()

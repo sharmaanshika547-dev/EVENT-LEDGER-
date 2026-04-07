@@ -12,3 +12,4 @@ def verify_password(plain_password, hashed_password):
     # Logic: Do the same cut here so they match!
     safe_password = plain_password[:72]
     return pwd_context.verify(safe_password, hashed_password)
+

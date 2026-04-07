@@ -1,3 +1,5 @@
+from sqlalchemy import select 
+from sqlalchemy.ext.asyncio import AsyncSession 
 import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -61,22 +63,22 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(security
 # --- ADD THIS SIGNUP ROUTE ---
 
 @router.post("/signup")
-def signup(user_in: LoginRequest, db: Session = Depends(get_db)):
-    # 1. Logic: Check if the username is already taken
-    print(f"DEBUG: Password received is: {user_in.password}")
-    existing_user = db.query(User).filter(User.username == user_in.username).first()
+async def signup(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
+    # 1. Check if user exists (Async style)
+    query = select(User).where(User.email == user_data.email)
+    result = await db.execute(query)
+    existing_user = result.scalar_one_or_none()
+    
     if existing_user:
-        # Term: '400 Bad Request' -> The server says "I can't do that because the data is wrong"
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = pwd_context.hash(user_data.password)
 
-    # 2. Logic: Scramble the password using our utility and save it
-    new_user = User(
-        username=user_in.username, 
-        hashed_password=hash_password(user_in.password) # From app.utils
-    )
-    
+    # 2. Create new user
+    new_user = User(email=user_data.email, password=hashed_password)
     db.add(new_user)
-    db.commit() # This physically writes the row into momentum.db
-    db.refresh(new_user) # This grabs the new ID the database assigned
     
-    return {"message": "User created successfully!", "user_id": new_user.id}
+    # 3. Await the commit and refresh
+    await db.commit()
+    await db.refresh(new_user)
+    return new_user

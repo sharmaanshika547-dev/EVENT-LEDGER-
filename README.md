@@ -351,3 +351,26 @@ Database for users (instead of in-memory)
 Password hashing with bcrypt
 Pagination & filtering
 Deployment on AWS
+
+
+DATBASE MIGRATIONS 
+
+# 📔 Event Ledger Backend
+
+A production-grade backend built with FastAPI, SQLAlchemy, and Alembic.
+
+## 🚀 Technical Stack
+* **Framework:** FastAPI (Asynchronous)
+* **Database:** SQLite (SQLAlchemy ORM)
+* **Migrations:** Alembic
+* **OS:** Fedora Linux
+
+---
+
+## 🗄️ Database Management (Alembic)
+We use Alembic to handle schema changes without losing data. **Never delete the .db file manually.**
+
+### How to update the Database:
+1. **Modify Models:** Change the classes in `app/models/`.
+2. **Generate Script:** ```bash
+   alembic revision --autogenerate -m "description of change"

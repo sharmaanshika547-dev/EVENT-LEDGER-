@@ -1,71 +1,75 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from typing import List
 
-# 1. Logic: Fix the Imports to match your folder structure
-from app.database import get_db
-from app.routes.auth import get_current_user  # Logic: The 'bouncer' for JWT
-from app.models.event import Event            # Logic: The DB table blueprint
+# Import your database and models properly
+from .database import get_db
+from . import models, schemas  # Assuming you have these files
 
-router = APIRouter(prefix="/events", tags=["events"])
+router = APIRouter()
 
-# --- 1. The Schema (The Contract) ---
-class EventCreate(BaseModel):
-    title: str  
-    date: Optional[str] = None
-    description :str
+# 1. READ ALL
+@router.get("/events/", response_model=List[schemas.Event])
+async def read_events(db: AsyncSession = Depends(get_db)):
+    stmt = select(models.Event)
+    result = await db.execute(stmt)
+    # FIX: Changed 'results' to 'result' and 'scalara' to 'scalars'
+    events = result.scalars().all()
+    return events 
 
-class EventResponse(EventCreate):
-    id: int
-    user_id: int
-    class Config:
-        from_attributes = True
+# 2. READ ONE
+@router.get("/events/{event_id}", response_model=schemas.Event)
+async def read_event(event_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = select(models.Event).where(models.Event.id == event_id)
+    result = await db.execute(stmt)
+    # FIX: Changed 'scalara' to 'scalars'
+    event = result.scalars().first()
 
-# --- 2. The Routes ---
-
-@router.post("/", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
-async def create_event(
-    event_in: EventCreate, 
-    db: Session = Depends(get_db),              # Logic: Grabs the DB connection
-    current_user_id: int = Depends(get_current_user) # Logic: Grabs the User ID from JWT
-):
-    # 2. Logic: Create the actual DB record
-    new_event = Event(
-        owner_id=current_user_id, 
-        title=event_in.title,
-        description=event_in.description,
-        date=event_in.date
-    )
-    db.add(new_event)
-    db.commit()
-    db.refresh(new_event) # Logic: This gives us the 'id' assigned by the DB
-    return new_event
-
-@router.get("/", response_model=List[EventResponse])
-async def fetch_events(
-    db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user)
-):
-    # 3. Logic: Filter events so Anshika only sees Anshika's events
-    events = db.query(Event).filter(Event.user_id == current_user_id).all()
-    return events
-
-@router.delete("/{event_id}")
-async def delete_event(
-    event_id: int, 
-    db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user)
-):
-    # 4. Logic: Find and Verify ownership before deleting
-    event = db.query(Event).filter(Event.id == event_id).first()
-    
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
+    return event
+
+# 3. CREATE
+@router.post("/events/", status_code=status.HTTP_201_CREATED)
+async def create_event(event_data: schemas.EventCreate, db: AsyncSession = Depends(get_db)):
+    # Use .dict() or .model_dump() if using Pydantic v2
+    new_event = models.Event(**event.model_dump(),user_id=current_user_id)
     
-    if event.user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this")
-        
-    db.delete(event)
-    db.commit()
-    return {"message": "Event deleted successfully"}
+    db.add(new_event)
+    await db.commit()
+    await db.refresh(new_event)
+    
+    return new_event
+
+@router.put("/events/{event_id}",response_model=schemas.Event)
+async def update_event(event_id:int,event_update:schemas.EventUpdate,db:AsyncSession=Depends(get_db)):
+    stmt = select(models.Event).where(models.Event.id== event_id)
+    result = await db.execute(stmt)
+    db_event= result.scalars().first()
+
+    if not db.event:
+        raise HTTPException(status_code=404,detail ="event not found")
+    
+    update_data = event_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_event,key, value)
+
+    await db.commit()
+    await db.refrsh(db_event)
+    return db_event
+
+
+@router.delete("/events/{event_id}",status_code=status.HTTP_204_NO_CONTENT)
+async def delete_event(event_id:int,db:AsyncSession=Depends(get_db)):
+    stmt = select(models.Event).where(models.Event.id ==event_id)
+    result = await db.execute(stmt)
+    db_event = result.scalars().first()
+
+    if not db_event:
+        raise HTTPException(status_code = 404,detail ="event not found")
+    
+    await db.delete(db_event)
+    await db.commit()
+
+    return None
